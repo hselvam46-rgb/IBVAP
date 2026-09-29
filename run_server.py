@@ -14,9 +14,9 @@ if BASE_DIR not in sys.path:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    print("=" * 65)
-    print("  IBVAP: Intelligent Border Vigilance & Analytics Platform")
-    print(f"  Tactical C4I Operator Console -> http://0.0.0.0:{port}")
-    print("=" * 65)
+    print("=" * 65, flush=True)
+    print("  IBVAP: Intelligent Border Vigilance & Analytics Platform", flush=True)
+    print(f"  Tactical C4I Operator Console -> http://0.0.0.0:{port}", flush=True)
+    print("=" * 65, flush=True)
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
 

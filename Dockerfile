@@ -2,28 +2,26 @@
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    PORT=10000
 
 WORKDIR /app
 
-# Install system dependencies for OpenCV and Tesseract OCR
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libgl1 \
-    libglib2.0-0 \
     tesseract-ocr \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY backend/requirements.txt requirements.txt
+# Install python dependencies from root requirements.txt (headless OpenCV)
+COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
 COPY . .
 
-# Expose server port
-EXPOSE 8000
+# Expose ports
+EXPOSE 10000 8000
 
-# Run unified server
+# Run server
 CMD ["python", "run_server.py"]

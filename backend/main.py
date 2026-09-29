@@ -52,7 +52,12 @@ app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dir, "assets"))
 @app.on_event("startup")
 def on_startup():
     """Initialize database tables and default seed data on startup."""
-    init_db()
+    try:
+        init_db()
+        print("[IBVAP] Database initialized successfully.", flush=True)
+    except Exception as e:
+        print(f"[IBVAP] Warning: init_db encountered: {e}", flush=True)
+
 
 
 @app.get("/")
