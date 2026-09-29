@@ -12,7 +12,7 @@ import time
 import cv2
 import numpy as np
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List, Set, Optional, Tuple, Union
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from backend.database.db import SessionLocal
