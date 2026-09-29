@@ -5,6 +5,7 @@ SQLAlchemy ORM models for on-premise edge storage.
 
 from datetime import datetime, timezone
 import json
+from typing import List, Dict, Any, Optional
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Index
 )
