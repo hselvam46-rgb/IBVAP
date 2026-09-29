@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBVAP // C4I Tactical Console - Indian Border Surveillance</title>
+  <link rel="icon" type="image/png" href="/frontend/assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/frontend/css/style.css">
+  <link rel="stylesheet" href="/frontend/css/components.css">
+</head>
+<body class="tactical-console">
+
+  <!-- ================= TOP HEADER HUD BAR ================= -->
+  <header class="top-hud-bar">
+    <div class="brand-section">
+      <img src="/frontend/assets/logo_emblem.png" alt="BSF Emblem" class="brand-logo-img">
+      <div class="brand-titles">
+        <h1>IBVAP // C4I TACTICAL CONSOLE</h1>
+        <span class="brand-sub">SECTOR 88: EASTERN FRONTIER // INDO-BANGLADESH BORDER</span>
+      </div>
+    </div>
+
+    <!-- Telemetry Badges -->
+    <div class="telemetry-section">
+      <div class="badge-secured-node">
+        <span>🔒 SECURED C4I NODE</span>
+      </div>
+
+      <div class="telemetry-chip" title="Live Targets in Surveillance Stage">
+        <span class="dot dot-green"></span>
+        <span>TARGETS:</span>
+        <span class="val-green font-mono" id="telemetry-target-count">0</span>
+        <span style="display:none;" id="telemetry-alert-count">0</span>
+      </div>
+
+      <div class="telemetry-chip" title="Real-time end-to-end processing latency">
+        <span class="dot dot-green"></span>
+        <span>GRID LATENCY:</span>
+        <span class="val-green" id="hdr-latency">38ms</span>
+        <span class="metric-sub">[PASS &lt;1.2s]</span>
+      </div>
+
+      <div class="telemetry-chip clickable" id="btn-toggle-link" title="Click to simulate Edge WAN Disconnection">
+        <span class="dot dot-green"></span>
+        <span>EDGE LINK:</span>
+        <span class="val-green" id="hdr-link-status">ONLINE</span>
+        <span class="metric-sub">[HQ SYNC]</span>
+      </div>
+
+      <div class="telemetry-chip">
+        <span>TIME:</span>
+        <span class="font-mono" id="hdr-clock" style="font-weight:700;">09:16:30 IST // 03:46:30 ZULU</span>
+      </div>
+
+      <div class="badge-defcon-crit" id="btn-defcon-badge" title="DEFCON-1 Mass Infiltration Protocol Triggered">
+        <span class="blink-dot"></span>
+        <span>DEFCON-1: CRITICAL</span>
+      </div>
+    </div>
+
+    <!-- Operator Profile -->
+    <div class="operator-section">
+      <div class="operator-details">
+        <span class="op-label">OPERATOR ID</span>
+        <span class="op-name" id="hdr-operator-name">R. Sharma [BSF-8812]</span>
+      </div>
+      <div class="operator-avatar-wrapper" id="btn-operator-profile" title="Operator Profile &amp; Switch Role">
+        <img src="/frontend/assets/operator_avatar.jpg" alt="R. Sharma" class="operator-avatar-img">
+        <span class="active-dot"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SUB-BAR: SOURCE & SENSOR TOOLBAR ================= -->
+  <nav class="sub-toolbar">
+    <!-- Left: Video Ingestion Mode Selector -->
+    <div class="toolbar-group-left">
+      <button class="btn-source-pill active" id="btn-src-sector" title="Indo-Bangladesh Border surveillance cameras">
+        ■ IBB SECTOR CAMERAS
+      </button>
+      <button class="btn-source-pill" id="btn-src-webcam" title="Laptop / USB Integrated Webcam (Device 0)">
+        LIVE LAPTOP CAM
+      </button>
+      <button class="btn-source-pill" id="btn-src-mobile" title="Connect field smartphone camera via local Wi-Fi">
+        MOBILE IP CAM (WI-FI)
+      </button>
+    </div>
+
+    <!-- Center: Active Camera Selector -->
+    <div class="toolbar-group-center" id="cam-select-wrapper">
+      <span class="node-label">NODE:</span>
+      <select id="cam-select" class="node-select">
+        <option value="CAM-01-IBB-PETRAPOLE">CAM-01: Zero Line (Tower 7A - Petrapole)</option>
+        <option value="CAM-02-IBB-ICHAMATI">CAM-02: Ichamati River Reach (Thermal Ironbow)</option>
+        <option value="CAM-03-IBB-ICP-ANPR">CAM-03: ICP Petrapole Cargo Barrier (ANPR)</option>
+        <option value="CAM-04-IBB-DAWKI">CAM-04: Smart Border Fence (Dawki Post 12, Meghalaya)</option>
+      </select>
+    </div>
+
+    <!-- Right: Display Mode, Shaders, Auto-Popup & Utilities -->
+    <div class="toolbar-group-right">
+      <!-- Single / 2x2 Matrix View Mode -->
+      <button class="btn-view-icon" id="btn-view-single" title="Single Camera Focus Mode">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="btn-view-icon active" id="btn-view-matrix" title="2x2 Multi-Camera Matrix View">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>
+      </button>
+
+      <!-- Thermal Sensor Shaders -->
+      <button class="btn-shader active" data-mode="OPTICAL">OPTICAL</button>
+      <button class="btn-shader" data-mode="NVG_GREEN">NVG GREEN</button>
+      <button class="btn-shader" data-mode="IR_WHITE_HOT">IR WHITE-HOT</button>
+      <button class="btn-shader" data-mode="IR_BLACK_HOT">IR BLACK-HOT</button>
+
+      <!-- Auto Popup on Breach Toggle -->
+      <button class="badge-auto-popup" id="btn-toggle-auto-popup" title="Toggle automatic threat modal on detection" style="cursor:pointer; background:none; border:none; padding:0; font-family:inherit;">
+        AUTO POPUP: <span id="auto-popup-status" style="color:var(--mil-amber); font-weight:700;">MUTED</span>
+      </button>
+
+      <!-- Quick Action Circle Tools -->
+      <button class="btn-circle-tool" id="btn-refresh-stream" title="Reconnect Video WebSockets">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+      <button class="btn-circle-tool" id="btn-snapshot-stage" title="Capture Still Snapshot">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      </button>
+      <button class="btn-rec-pill" id="btn-record-indicator">
+        <span class="rec-dot"></span>
+        <span>REC</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= CORE MAIN VIEWPORT: 3-COLUMN LAYOUT ================= -->
+  <main class="console-main-grid">
+
+    <!-- COLUMN 1: LEFT NAVIGATION SIDEBAR -->
+    <aside class="left-nav-sidebar">
+      <div>
+        <div class="sidebar-header">
+          <span class="sidebar-title">SYSTEM CORE NAVIGATION</span>
+          <span class="sidebar-status-ok">SYS.OK</span>
+        </div>
+
+        <nav class="nav-item-list">
+          <button class="nav-link-btn active" data-core-tab="tab-map">
+            <span>01 TACTICAL MAP</span>
+            <span class="badge-nav-live">LIVE</span>
+          </button>
+          <button class="nav-link-btn" data-core-tab="tab-matrix">
+            <span>02 SENSOR MATRIX</span>
+            <span class="badge-nav-count">124</span>
+          </button>
+          <button class="nav-link-btn" data-core-tab="tab-uav">
+            <span>03 AIR RECON UAV</span>
+            <span class="badge-nav-alert">ALERT</span>
+          </button>
+          <button class="nav-link-btn" data-core-tab="tab-spectrum">
+            <span>04 EW &amp; RF SPECTRUM</span>
+          </button>
+          <button class="nav-link-btn" data-core-tab="tab-fires">
+            <span>05 FIRE SUPPORT GRID</span>
+          </button>
+          <button class="nav-link-btn" data-core-tab="tab-comms">
+            <span>06 COMMS RELAY</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom Cipher & Storage Health -->
+      <div class="sidebar-bottom-telemetry">
+        <div class="cipher-row">
+          <div class="cipher-label-row">
+            <span>ENCRYPTION CIPHER</span>
+            <strong style="color:var(--mil-green);">AES-256 GCM</strong>
+          </div>
+          <div class="cipher-bar">
+            <div class="cipher-fill"></div>
+          </div>
+        </div>
+
+        <div class="cipher-row">
+          <div class="cipher-label-row">
+            <span>DOWNLINK BUFFER</span>
+            <strong style="color:var(--navy-dark);">98.4% CAP</strong>
+          </div>
+          <div class="cipher-bar">
+            <div class="cipher-fill" style="width: 98.4%;"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- COLUMN 2: CENTER SURVEILLANCE STAGE (2x2 MATRIX & SINGLE VIEW) -->
+    <section class="center-surveillance-stage">
+      
+      <!-- 2x2 Camera Matrix Grid (Default View as per Reference) -->
+      <div class="matrix-grid-stage" id="matrix-container">
+
+        <!-- Tile 1: CAM-01 Petrapole Zero Line -->
+        <div class="cam-tile" id="matrix-tile-CAM-01-IBB-PETRAPOLE" data-cam="CAM-01-IBB-PETRAPOLE">
+          <div class="cam-tile-top">
+            <span class="cam-tile-name">● CAM-01 // ZERO LINE T7A</span>
+            <span style="font-size:8.5px; color:#cbd5e1;">OPTICAL 60FPS</span>
+            <span class="cam-status-pill status-pill-green" id="matrix-pill-CAM-01-IBB-PETRAPOLE">ACTIVE VIGIL</span>
+          </div>
+
+          <div class="tile-warning-banner" id="matrix-banner-CAM-01-IBB-PETRAPOLE" style="display:none;">
+            <span>⚠️ RESTRICTED ZERO LINE EXCLUSION ZONE // TRIPWIRE BREACH INBOUND</span>
+          </div>
+
+          <canvas id="matrix-canvas-CAM-01-IBB-PETRAPOLE" class="cam-tile-canvas" width="480" height="270"></canvas>
+
+          <div class="cam-tile-bottom">
+            <span>LAT: 23°04'12.4"N | LON: 88°53'44.2"E</span>
+            <span class="telemetry-green" id="matrix-hud-CAM-01-IBB-PETRAPOLE">AZIMUTH: 042° | ZOOM: 4.2x PTZ</span>
+          </div>
+        </div>
+
+        <!-- Tile 2: CAM-02 Ichamati River Thermal Ambush -->
+        <div class="cam-tile normal-green" id="matrix-tile-CAM-02-IBB-ICHAMATI" data-cam="CAM-02-IBB-ICHAMATI">
+          <div class="cam-tile-top">
+            <span class="cam-tile-name">● CAM-02 // ICHAMATI RIVER</span>
+            <span style="font-size:8.5px; color:#cbd5e1;">IR NIGHT VISION</span>
+            <span class="cam-status-pill status-pill-green" id="matrix-pill-CAM-02-IBB-ICHAMATI">NORMAL</span>
+          </div>
+
+          <div class="tile-warning-banner" id="matrix-banner-CAM-02-IBB-ICHAMATI" style="display:none;">
+            <span>⚠️ RIVERINE REACH BREACH DETECTED</span>
+          </div>
+
+          <canvas id="matrix-canvas-CAM-02-IBB-ICHAMATI" class="cam-tile-canvas" width="480" height="270"></canvas>
+
+          <div class="cam-tile-bottom">
+            <span>SURFACE RADAR: CLEAR // FLOW: 2.1 KTS</span>
+            <span class="telemetry-green" id="matrix-hud-CAM-02-IBB-ICHAMATI">HEAT RANGE: 18°C - 38.5°C</span>
+          </div>
+        </div>
+
+        <!-- Tile 3: CAM-03 Haridaspur Checkpost ANPR Lane -->
+        <div class="cam-tile" id="matrix-tile-CAM-03-IBB-ICP-ANPR" data-cam="CAM-03-IBB-ICP-ANPR">
+          <div class="cam-tile-top">
+            <span class="cam-tile-name">● CAM-03 // HARIDASPUR CHECKPOST</span>
+            <span style="font-size:8.5px; color:#cbd5e1;">IR WHITE-HOT</span>
+            <span class="cam-status-pill status-pill-white" id="matrix-pill-CAM-03-IBB-ICP-ANPR">ANPR ACTIVE</span>
+          </div>
+
+          <div class="tile-warning-banner" id="matrix-banner-CAM-03-IBB-ICP-ANPR" style="display:none;">
+            <span>⚠️ HOTLIST VEHICLE DETECTED AT CARGO GATE</span>
+          </div>
+
+          <canvas id="matrix-canvas-CAM-03-IBB-ICP-ANPR" class="cam-tile-canvas" width="480" height="270"></canvas>
+
+          <div class="cam-tile-bottom">
+            <span>GATE: #3 CARGO LANE ENTRY</span>
+            <span class="telemetry-cyan" id="matrix-hud-CAM-03-IBB-ICP-ANPR">OPTICAL SENSOR: LOCKED</span>
+          </div>
+        </div>
+
+        <!-- Tile 4: CAM-04 Smart Border Fence & Radar Inset -->
+        <div class="cam-tile" id="matrix-tile-CAM-04-IBB-DAWKI" data-cam="CAM-04-IBB-DAWKI">
+          <div class="cam-tile-top">
+            <span class="cam-tile-name">● CAM-04 // SMART FENCE C9</span>
+            <span style="font-size:8.5px; color:#cbd5e1;">OPTICAL PTZ</span>
+            <span class="cam-status-pill status-pill-green" id="matrix-pill-CAM-04-IBB-DAWKI">SWEEP ACTIVE</span>
+          </div>
+
+          <div class="tile-warning-banner" id="matrix-banner-CAM-04-IBB-DAWKI" style="display:none;">
+            <span>⚠️ SMART FENCE PERIMETER ALARM</span>
+          </div>
+
+          <canvas id="matrix-canvas-CAM-04-IBB-DAWKI" class="cam-tile-canvas" width="480" height="270"></canvas>
+
+          <!-- Inset Circular Radar Widget -->
+          <div class="tile-radar-widget">
+            <div class="radar-sweep-line"></div>
+            <div class="radar-blip-target" title="Target TRK-402 on boundary"></div>
+            <div class="radar-label-txt">
+              <span>SONABARIAL SECTOR // SECURE</span><br>
+              <span style="color:#ffffff;">TRK-402 | RNG: 500M | RADAR OK</span>
+            </div>
+          </div>
+
+          <div class="cam-tile-bottom">
+            <span>POST 12 DAWKI GORGE // BORDER FENCE</span>
+            <span class="telemetry-green" id="matrix-hud-CAM-04-IBB-DAWKI">RADAR SYNC ACTIVE</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Single Camera View Stage (Expandable on Focus or Tool Use) -->
+      <div class="single-cam-stage" id="single-cam-container">
+        <div class="cam-tile-top" style="position:relative;">
+          <span class="cam-tile-name" id="single-cam-title">● CAM-01: Zero Line (Tower 7A - Petrapole)</span>
+          <button class="btn-tile-focus" id="btn-back-to-matrix" style="padding:2px 8px; font-size:9.5px; font-family:var(--font-mono); background:#1e293b; color:#fff; border:none; cursor:pointer;">
+            ⮌ 2x2 MATRIX VIEW
+          </button>
+        </div>
+        <div style="flex:1; position:relative; overflow:hidden;">
+          <canvas id="live-canvas" width="640" height="360" style="width:100%; height:100%; display:block; object-fit:cover;"></canvas>
+        </div>
+        <!-- Single Cam Drawing Controls -->
+        <div class="drawing-action-bar">
+          <div class="drawing-tools-group">
+            <button class="btn-tool" id="btn-draw-tripwire">DRAW TRIPWIRE (INBOUND)</button>
+            <button class="btn-tool" id="btn-draw-polygon">DRAW POLYGON (90s DWELL)</button>
+            <button class="btn-tool btn-danger-ghost" id="btn-clear-draw" style="display:none;">CANCEL</button>
+            <button class="btn-tool btn-success" id="btn-save-draw" style="display:none;">SAVE ZONE</button>
+          </div>
+          <button class="btn-tool btn-amber" id="btn-trigger-demo-breach">⚡ TRIGGER DEMO BREACH</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUMN 3: RIGHT SIDEBAR - LIVE THREAT TRIAGE -->
+    <aside class="right-triage-panel">
+      <!-- Panel Header -->
+      <div class="triage-header">
+        <div class="triage-title-group">
+          <h2 class="triage-title">LIVE THREAT TRIAGE</h2>
+          <span class="badge-crit-count" id="badge-crit-count">0 CRIT</span>
+          <span class="badge-high-count" id="badge-high-count">0 HIGH</span>
+        </div>
+        <button class="btn-reset-queue" id="btn-clear-demo-queue" title="Reset and purge test alert backlog">
+          RESET QUEUE
+        </button>
+      </div>
+
+      <!-- Container for dynamic incoming live WebSocket alerts -->
+      <div id="alert-stream-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+      <!-- Empty state when queue is cleared -->
+      <div id="alerts-empty-state" style="display:none; text-align:center; padding:28px 12px; border:1px dashed var(--border-main); border-radius:var(--radius-xs); background:rgba(0,0,0,0.02);">
+        <div style="font-size:22px; margin-bottom:8px;">🛡️</div>
+        <div style="font-size:11.5px; font-weight:800; font-family:var(--font-mono); color:var(--navy-dark); letter-spacing:0.5px;">PERIMETER SECURE</div>
+        <div style="font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); margin-top:4px;">No active threat breaches in queue. Monitoring live border sectors in real-time.</div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ================= BOTTOM TACTICAL SYSTEM DOCK ================= -->
+  <section class="bottom-dock-container">
+    
+    <!-- Dock Tab Header -->
+    <div class="dock-tab-header">
+      <div class="dock-tab-buttons">
+        <button class="dock-tab-btn" data-tab="tab-map">🗺️ SECTOR RADAR MAP</button>
+        <button class="dock-tab-btn active" data-tab="tab-recurrent">👤 RECURRENT SIGHTINGS (ACTIVE)</button>
+        <button class="dock-tab-btn" data-tab="tab-mobilization">🚨 HQ COMMS &amp; DEFCON-1</button>
+        <button class="dock-tab-btn" data-tab="tab-audit">🛡️ SHA-256 AUDIT LOG</button>
+        <button class="dock-tab-btn" data-tab="tab-watchlist">📋 WATCHLISTS</button>
+        <button class="dock-tab-btn" data-tab="tab-sync">📡 STORE-AND-FORWARD</button>
+      </div>
+
+      <div class="dock-header-right">
+        <span>STATION: PETRAPOLE-ICP</span>
+        <span>NET: <strong class="net-fiber">10 Gbps FIBER</strong></span>
+      </div>
+    </div>
+
+    <!-- Dock Content Body -->
+    <div class="dock-body-content">
+      
+      <!-- TAB: RECURRENT & DEFCON-1 SPLIT (Default active in reference image) -->
+      <div class="tab-pane-content active" id="tab-recurrent">
+        <div class="dock-split-grid">
+          
+          <!-- LEFT CARD: MULTI-OUTPOST CORRELATION ENGINE -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="dock-card-title">MULTI-OUTPOST CORRELATION ENGINE</span>
+              <span class="dock-badge-green">CROSS-NODE MATCH</span>
+              <span style="font-size:10px; font-family:var(--font-mono); color:var(--text-muted);">TARGET: SUBJECT-4E57</span>
+            </div>
+
+            <!-- Sighting Comparison Path -->
+            <div class="correlation-timeline-row">
+              <div class="timeline-box">
+                <span class="box-lbl">SIGHTING A</span>
+                <span class="box-val">08:30 IST @ BOP Petrapole</span>
+              </div>
+              <div class="timeline-arrow-mid">
+                <span>DELTA +42 MIN</span>
+                <span>➔ 3.4 KM ➔</span>
+              </div>
+              <div class="timeline-box latest">
+                <span class="box-lbl">SIGHTING B (LATEST)</span>
+                <span class="box-val">09:12 IST @ Ichamati River</span>
+              </div>
+            </div>
+
+            <div class="timeline-desc-txt">
+              Status: <strong>PROBABLE EXTRACTION POINT PREPARATION.</strong> Sensor cross-correlation confirms footprint vectors heading towards River Sector 88-B.
+            </div>
+
+            <div class="dock-card-footer-row">
+              <span class="asset-assign-txt">ASSIGNED SECTOR ASSET: <strong>PATROL BOAT #14 &amp; BOP COY C</strong></span>
+              <button class="btn-dock-action-green" id="btn-dispatch-team-bravo">
+                DISPATCH QRT INTERCEPT (TEAM BRAVO)
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT CARD: DEFCON-1 MASS INFILTRATION PROTOCOL -->
+          <div class="dock-card card-defcon">
+            <div class="dock-card-header">
+              <span class="dock-card-title" style="color:var(--mil-red);">
+                <span class="blink-dot" style="background:var(--mil-red);"></span>
+                DEFCON-1 MASS INFILTRATION PROTOCOL
+              </span>
+              <span class="dock-badge-red">CRITICAL LEVEL 1</span>
+            </div>
+
+            <div class="defcon-warning-callout">
+              <span>⚠️ 16+ INDIVIDUALS DETECTED CROSSING ZERO LINE NEAR BOUNDARY PILLAR 142/3-S</span>
+              <span class="badge-fusion">FUSION CONCURRENCE</span>
+            </div>
+
+            <div class="sensor-chips-row">
+              <span class="sensor-chip sensor-chip-red">SEISMIC SENSOR: 18 HZ VIBRATION</span>
+              <span class="sensor-chip sensor-chip-red">OPTICAL AI: CONFIRMED MULTI-TARGET</span>
+              <span class="sensor-chip sensor-chip-green">MICRO-DOPPLER: TRACKING ACTIVE</span>
+            </div>
+
+            <div class="defcon-actions-row">
+              <button class="btn-call-hq-red" id="btn-call-reinforcements-142">
+                🚨 CALL HQ REINFORCEMENTS (142 BN)
+              </button>
+              <button class="btn-allied-navy" id="btn-allied-broadcast-assam">
+                📡 ALLIED HIGH ALERT (ASSAM RIFLES)
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Dynamic Recurrent Persons List -->
+        <div style="margin-top:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:4px; padding:10px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">
+              ● LIVE DETECTED RECURRENT TARGETS (<span id="recurrent-target-count" style="color:var(--mil-amber);">0</span>)
+            </span>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <label style="font-size:10px; color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="chk-show-all-sightings"> Show Single Sightings
+              </label>
+              <button class="btn-tool" id="btn-refresh-recurrent" style="font-size:9.5px; padding:2px 8px;">REFRESH</button>
+            </div>
+          </div>
+          <div class="recurrent-grid-list" id="recurrent-list-container" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:8px;"></div>
+        </div>
+
+      </div>
+
+      <!-- TAB: HQ COMMS & DEFCON-1 MOBILIZATION -->
+      <div class="tab-pane-content" id="tab-mobilization">
+        <div class="audit-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="audit-stats">
+            <span>DEFCON STATUS: <strong style="color:var(--mil-red);">DEFCON-1 ACTIVE</strong></span>
+            <span style="margin:0 8px; color:#cbd5e1;">|</span>
+            <span>TRANSMITTED ORDERS: <strong id="mob-orders-count">0</strong></span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-tool btn-danger" id="btn-trigger-hq-manual">🚨 TRANSMIT EMERGENCY HQ ORDER</button>
+            <button class="btn-tool" id="btn-trigger-allies-manual">📡 BROADCAST ALLIED ALERT</button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="hud-table" id="table-mobilization">
+            <thead>
+              <tr>
+                <th>ORDER ID</th>
+                <th>TIMESTAMP</th>
+                <th>TRIGGER REASON</th>
+                <th>FORCE DEPLOYED</th>
+                <th>STATUS</th>
+                <th>ALLIED BROADCAST</th>
+                <th>TRANSMISSION HASH</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-mobilization"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: SECTOR RADAR MAP -->
+      <div class="tab-pane-content" id="tab-map">
+        <div class="map-view-wrapper">
+          <div class="map-hud-overlay">
+            <span class="map-label">EASTERN SECTOR // BOP PETRAPOLE &amp; MEGHALAYA • ZERO LINE (IBB)</span>
+            <div class="map-legend">
+              <span class="legend-item"><span class="dot cam-normal"></span> CAMERA TOWER</span>
+              <span class="legend-item"><span class="dot cam-breached"></span> BREACH ALERT</span>
+              <span class="legend-item"><span class="dot bop"></span> BORDER OUTPOST (BOP)</span>
+              <span class="legend-item"><span class="line fence"></span> ZERO LINE FENCE</span>
+            </div>
+          </div>
+          <div class="interactive-tactical-map" id="tactical-sector-map"></div>
+        </div>
+      </div>
+
+      <!-- TAB: SHA-256 AUDIT LOG -->
+      <div class="tab-pane-content" id="tab-audit">
+        <div class="audit-toolbar">
+          <div class="audit-stats">
+            <span>TAMPER STATUS: <strong id="audit-status-badge" style="color:var(--mil-green);">CRYPTOGRAPHICALLY VERIFIED</strong></span>
+            <span style="margin:0 8px; color:#cbd5e1;">|</span>
+            <span>RECORDS: <strong id="audit-record-count">0</strong></span>
+          </div>
+          <button class="btn-tool btn-active" id="btn-verify-audit">VERIFY SHA-256 HASH CHAIN</button>
+        </div>
+        <div class="table-container">
+          <table class="hud-table" id="table-audit">
+            <thead>
+              <tr>
+                <th>LOG ID</th>
+                <th>TIMESTAMP (UTC)</th>
+                <th>OPERATOR / BADGE</th>
+                <th>ACTION EVENT</th>
+                <th>DETAILS</th>
+                <th>PREV HASH (CHAIN)</th>
+                <th>SHA-256 INTEGRITY HASH</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-audit"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: WATCHLISTS -->
+      <div class="tab-pane-content" id="tab-watchlist">
+        <div class="watchlist-split-view">
+          <div class="watchlist-col">
+            <h3>BIOMETRIC FACIAL WATCHLIST (512-D ARCFACE EMBEDDINGS)</h3>
+            <p class="privacy-note">512-d normalized numeric vectors; zero unencrypted face photos linked to identity.</p>
+            <div class="watchlist-card-list" id="watchlist-person-list"></div>
+          </div>
+          <div class="watchlist-col">
+            <h3>HOTLIST NUMBER PLATES (ANPR CHECKPOST)</h3>
+            <p class="privacy-note">PaddleOCR with Indian regional regex format validation (Standard, Bharat BH, Defense).</p>
+            <div class="watchlist-card-list" id="watchlist-plate-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: STORE-AND-FORWARD SYNC -->
+      <div class="tab-pane-content" id="tab-sync">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="dock-card">
+            <span class="dock-card-title">EDGE LINK STATUS: <span id="sync-text-status" style="color:var(--mil-green);">ONLINE // DIRECT HQ LINK</span></span>
+            <p style="font-size:10px; color:var(--text-secondary);">If WAN link drops, edge node operates 100% autonomously. Events accumulate in SQLite queue and auto-drain on reconnect.</p>
+            <button class="btn-tool" id="btn-simulate-link-toggle">SIMULATE WAN LINK DROP</button>
+          </div>
+          <div class="dock-card">
+            <span class="dock-card-title">STORE-AND-FORWARD QUEUE</span>
+            <div style="font-family:var(--font-mono); font-size:10px;">
+              <div>UNSYNCED BACKLOG: <strong id="sync-backlog-count" style="color:var(--mil-amber);">0 EVENTS</strong></div>
+              <div>ALL-TIME SYNCED: <strong id="sync-alltime-count" style="color:var(--mil-green);">0 EVENTS</strong></div>
+            </div>
+            <button class="btn-tool btn-active" id="btn-force-sync">FORCE DRAIN QUEUE TO HQ</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= BOTTOM CRYPTOGRAPHIC FOOTER ================= -->
+  <footer class="bottom-crypto-footer">
+    <div class="crypto-left">
+      <span class="crypto-check">✔</span>
+      <span>LEDGER INTEGRITY: SHA-256 CHAIN VERIFIED [<span class="crypto-val-green" id="footer-hash-id">0x8f2a...c39e</span>] // 0 SENSOR TAMPER EVENTS // NON-REPUDIABLE TAMPER-PROOF AUDIT ACTIVE</span>
+    </div>
+    <div class="crypto-right">
+      <span>HARDWARE HSM: FIPS 140-3 L4 // ENCRYPTION: AES-256-GCM MIL-SPEC</span>
+    </div>
+  </footer>
+
+  <!-- ================= MODALS & DRAWERS ================= -->
+  <!-- Mobile IP Cam Connection Modal -->
+  <div class="modal-backdrop" id="modal-mobile-cam" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">CONNECT SMARTPHONE WI-FI CAMERA</span>
+        <button class="modal-close-btn" id="btn-close-mobile-modal">&times;</button>
+      </div>
+      <form id="form-mobile-cam">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">PHONE STREAM URL (IP WEBCAM / DROIDCAM / RTSP)</label>
+            <input type="text" class="form-input" id="input-mobile-url" value="http://192.168.1.5:8080/video" placeholder="http://192.168.x.x:8080/video">
+          </div>
+          <p style="font-size:10px; color:var(--text-muted); line-height:1.4;">
+            Instructions: Install "IP Webcam" on Android or "DroidCam" on iOS. Connect your phone to the same local Wi-Fi or mobile hotspot. Paste the displayed video stream URL above.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn-tool btn-success">CONNECT STREAM</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 1. Review & Sign-Off Alert Modal (Mandatory Human-in-the-Loop) -->
+  <div class="modal-backdrop" id="modal-human-review" style="display:none;">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header">
+        <span class="modal-title">HUMAN-IN-THE-LOOP ALERT REVIEW &amp; SIGN-OFF</span>
+        <button class="modal-close-btn" id="btn-close-review">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="review-meta-box"></div>
+        <div id="review-media-container" style="display:flex; flex-direction:column; align-items:center; background:#0b1320; padding:12px; border-radius:4px; border:1px solid #1e293b;"></div>
+        <div class="form-group">
+          <label class="form-label">OPERATOR AUDIT NOTES (SIGN-OFF JUSTIFICATION)</label>
+          <input type="text" class="form-input" id="review-operator-notes" placeholder="Enter reason for sign-off or escalation..." value="Verified target movement via Sector 88 camera sensor">
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button class="btn-tool btn-danger-ghost" id="btn-action-dismiss">DISMISS AS FALSE ALARM</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-tool btn-success" id="btn-action-ack">ACKNOWLEDGE</button>
+          <button class="btn-tool btn-danger" id="btn-action-escalate">ESCALATE TO HQ</button>
+          <button class="btn-tool btn-amber" id="btn-action-dispatch-patrol">DISPATCH PATROL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Patrol Mobilization Modal -->
+  <div class="modal-backdrop" id="modal-patrol-dispatch" style="display:none;">
+    <div class="modal-dialog" style="max-width: 540px;">
+      <div class="modal-header">
+        <span class="modal-title">GROUND PATROL MOBILIZATION ORDER</span>
+        <button class="modal-close-btn" id="btn-close-patrol-modal">&times;</button>
+      </div>
+      <form id="form-patrol-dispatch">
+        <input type="hidden" id="dispatch-encounter-id" value="">
+        <div class="modal-body">
+          <div style="display:flex; gap:12px; align-items:center; background:var(--bg-subtle); padding:10px; border-radius:4px; border:1px solid var(--border-light);">
+            <img id="patrol-modal-photo" src="/frontend/assets/placeholder.jpg" style="width:70px; height:80px; object-fit:cover; border-radius:4px; border:1px solid #00d4ff;" alt="Target">
+            <div style="font-size:11px; line-height:1.5; font-family:var(--font-mono);">
+              <div>TARGET: <strong id="patrol-modal-alias" style="color:var(--mil-red);">SECTOR INCIDENT</strong></div>
+              <div>OCCURRENCE: <span id="patrol-modal-count">1 sighting</span></div>
+              <div>FIRST SEEN: <span id="patrol-modal-first-seen">CAM-01</span></div>
+              <div>LAST SEEN: <span id="patrol-modal-last-seen">CAM-01</span></div>
+              <div style="color:var(--mil-amber);" id="patrol-modal-delta">LIVE REAL-TIME INGESTION</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ASSIGN TACTICAL PATROL UNIT</label>
+            <select class="form-input" id="select-patrol-unit">
+              <option value="BSF_QRF_DELTA_9">BSF Quick Reaction Team Delta-9 (Fast Response Gypsy)</option>
+              <option value="BSF_PATROL_COY_C">BSF Company C Foot Patrol (Sector 88 Zero Line)</option>
+              <option value="BSF_BOAT_PATROL_14">BSF Watercraft Boat #14 (Ichamati River Reach)</option>
+              <option value="CISF_CHECKPOST_UNIT_3">CISF Checkpost Terminal Response Unit (Petrapole Cargo Gate)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">DISPATCH DIRECTIVE &amp; TACTICAL NOTES</label>
+            <textarea class="form-input" id="dispatch-notes" rows="3" style="height:auto; padding:8px;" placeholder="Orders for ground squad..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn-tool btn-success">TRANSMIT MOBILIZATION ORDER</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. DEFCON-1 HQ Reinforcement Transmission Modal -->
+  <div class="modal-backdrop" id="modal-hq-mobilization" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title" style="color:var(--mil-red);">🚨 DEFCON-1: TRANSMIT HQ REINFORCEMENT ORDER</span>
+        <button class="modal-close-btn" id="btn-close-hq-modal">&times;</button>
+      </div>
+      <form id="form-hq-mobilization">
+        <div class="modal-body">
+          <p style="font-size:11px; color:var(--text-secondary); line-height:1.4;">
+            Transmits high-priority DEFCON-1 mobilization dispatch to Sector Command HQ (142 BN Frontier) sealed with hardware cryptographic hash.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="form-group">
+              <label class="form-label">ESTIMATED PERSONS DETECTED</label>
+              <input type="number" class="form-input" id="hq-person-count" value="16" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ESTIMATED VEHICLES DETECTED</label>
+              <input type="number" class="form-input" id="hq-vehicle-count" value="0" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ESCALATION TRIGGER REASON</label>
+            <input type="text" class="form-input" id="hq-escalation-reason" value="Mass simultaneous breach attempt across zero-line border pillar 142/3-S">
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <input type="checkbox" id="hq-auto-allied-alert" checked>
+            <label for="hq-auto-allied-alert" style="font-size:10.5px; font-weight:600; color:var(--navy-dark); cursor:pointer;">
+              Simultaneously transmit Allied High Alert to Assam Rifles, Coast Guard &amp; Police
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn-tool btn-danger">DISPATCH ORDER TO SECTOR HQ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Allied Agency High Alert Broadcast Modal -->
+  <div class="modal-backdrop" id="modal-allied-broadcast" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">BROADCAST INTER-AGENCY ALLIED ALERT</span>
+        <button class="modal-close-btn" id="btn-close-allies-modal">&times;</button>
+      </div>
+      <form id="form-allied-broadcast">
+        <div class="modal-body">
+          <p style="font-size:11px; color:var(--text-secondary); line-height:1.4;">
+            Sends standardized C4I telemetry broadcast across BSF, Assam Rifles, Coast Guard and State Police dispatch networks.
+          </p>
+          <div class="form-group">
+            <label class="form-label">INTER-AGENCY SITUATION REPORT / ADVISORY NOTES</label>
+            <textarea class="form-input" id="allied-alert-notes" rows="3" style="height:auto; padding:8px;">DEFCON-1 situation declared at Eastern Frontier Sector 88. Coordinated perimeter vigilance and roadblock checkpoints requested.</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn-tool btn-navy">BROADCAST HIGH ALERT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Auto Threat Breach Pop-Up Modal -->
+  <div class="modal-backdrop" id="modal-suspicious-popup" style="display:none;">
+    <div class="modal-backdrop-inner" id="suspicious-popup-backdrop" style="position:absolute; inset:0;"></div>
+    <div class="modal-dialog" style="max-width: 500px; position:relative; z-index:2; border: 2px solid var(--mil-red); box-shadow: 0 0 40px rgba(220, 38, 38, 0.4);">
+      <div class="modal-header" style="background:#7f1d1d; color:#ffffff;">
+        <span class="modal-title" style="color:#ffffff;">⚠️ ACTIVE BREACH THREAT // <span id="suspicious-popup-cam">CAM-01</span></span>
+        <button class="modal-close-btn" id="btn-close-suspicious-popup" style="color:#ffffff;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#fee2e2; border:1px solid #f87171; border-radius:4px; padding:8px 12px; font-weight:700; color:#991b1b; font-size:11px; font-family:var(--font-mono);" id="suspicious-threat-banner">
+          TRIPWIRE EXCLUSION ZONE BREACH
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <img id="suspicious-popup-thumb" src="/frontend/assets/placeholder.jpg" style="width:130px; height:95px; object-fit:cover; border-radius:4px; border:1px solid #dc2626;" alt="Threat Frame">
+          <div style="font-size:11px; font-family:var(--font-mono); line-height:1.6; color:var(--text-primary);">
+            <div>LOCATION: <strong id="suspicious-popup-bop">Tower 7A - Petrapole</strong></div>
+            <div>TARGET: <span id="suspicious-popup-class" style="color:var(--mil-red); font-weight:700;">PERSON (ACTIVE INTRUSION)</span></div>
+            <div>CONFIDENCE: <span id="suspicious-popup-conf" style="color:var(--mil-green); font-weight:700;">94%</span></div>
+            <div>DETECTED: <span id="suspicious-popup-time">JUST NOW</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button class="btn-tool btn-danger-ghost" id="btn-suspicious-dismiss">DISMISS</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-tool" id="btn-suspicious-focus-cam">FOCUS CAMERA</button>
+          <button class="btn-tool btn-danger" id="btn-suspicious-dispatch-patrol">🚨 DISPATCH QRT INTERCEPT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Evidence Export Result Modal -->
+  <div class="modal-backdrop" id="modal-evidence" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">FORENSIC EVIDENCE PACKAGE EXPORTED</span>
+        <button class="modal-close-btn" id="btn-close-evidence">&times;</button>
+      </div>
+      <div class="modal-body" id="evidence-result-content"></div>
+      <div class="modal-footer">
+        <button class="btn-tool btn-active" onclick="document.getElementById('modal-evidence').style.display='none';">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Operator Login & Role Switch Modal -->
+  <div class="modal-backdrop" id="modal-login" style="display:none;">
+    <div class="modal-dialog" style="max-width: 420px;">
+      <div class="modal-header">
+        <span class="modal-title">BSF C4I OPERATOR AUTHENTICATION</span>
+        <button class="modal-close-btn" id="btn-close-login">&times;</button>
+      </div>
+      <form id="form-login">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">USERNAME</label>
+            <input type="text" class="form-input" id="login-username" value="operator" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">PASSWORD / CREDENTIAL</label>
+            <input type="password" class="form-input" id="login-password" value="operator123" required>
+          </div>
+          <div style="margin-top:6px;">
+            <span style="font-size:9.5px; font-family:var(--font-mono); color:var(--text-secondary); display:block; margin-bottom:4px;">QUICK ROLE SELECT:</span>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-tool btn-quick-role" data-u="operator" data-p="operator123" style="flex:1;">OPERATOR</button>
+              <button type="button" class="btn-tool btn-quick-role" data-u="admin" data-p="admin123" style="flex:1;">COMMANDER</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="btn-tool btn-danger-ghost" id="btn-logout">LOGOUT</button>
+          <button type="submit" class="btn-tool btn-success">AUTHENTICATE SESSION</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/frontend/js/app.js"></script>
+  <script src="/frontend/js/live_player.js"></script>
+  <script src="/frontend/js/alert_manager.js"></script>
+  <script src="/frontend/js/sector_map.js"></script>
+  <script src="/frontend/js/sync_control.js"></script>
+  <script src="/frontend/js/patrol_mobilization.js"></script>
+  <script src="/frontend/js/forensics.js"></script>
+  <script src="/frontend/js/zone_editor.js"></script>
+</body>
+</html>

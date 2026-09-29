@@ -1,0 +1,374 @@
+/* ==============================================================================
+   IBVAP UI COMPONENTS STYLESHEET (LIGHT TACTICAL THEME)
+   Modals, Drawing Controls, Sector Map, Audit Table, Watchlist Cards
+   ============================================================================== */
+
+/* ==============================================================================
+   INTERACTIVE DRAWING HUD OVERLAY (SINGLE CAM VIEW)
+   ============================================================================== */
+.drawing-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-main);
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.drawing-tools-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-tool {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-main);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-tool:hover {
+  background: var(--bg-hover);
+}
+
+.btn-tool.btn-active {
+  background: var(--navy-dark);
+  color: #fff;
+  border-color: var(--navy-dark);
+}
+
+.btn-tool.btn-amber {
+  background: var(--mil-amber-light);
+  color: var(--mil-amber);
+  border-color: var(--mil-amber);
+}
+.btn-tool.btn-amber:hover {
+  background: var(--mil-amber);
+  color: #fff;
+}
+
+.btn-tool.btn-danger-ghost {
+  background: var(--mil-red-light);
+  color: var(--mil-red);
+  border-color: var(--mil-red-border);
+}
+.btn-tool.btn-danger-ghost:hover {
+  background: var(--mil-red);
+  color: #fff;
+}
+
+.btn-tool.btn-success {
+  background: var(--mil-green);
+  color: #fff;
+  border-color: var(--mil-green);
+}
+.btn-tool.btn-success:hover {
+  background: #14532d;
+}
+
+/* ==============================================================================
+   MODALS (SUSPICIOUS POPUP, MOBILE CAM, FORENSICS, LOGIN)
+   ============================================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-dialog {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-subtle);
+}
+
+.modal-title {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--navy-dark);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.modal-close-btn:hover {
+  color: var(--navy-dark);
+}
+
+.modal-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--bg-subtle);
+}
+
+/* Form Controls in Modal */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-xs);
+  outline: none;
+  background: #ffffff;
+}
+.form-input:focus {
+  border-color: var(--navy-dark);
+}
+
+/* ==============================================================================
+   SECTOR MAP (TAB 1)
+   ============================================================================== */
+.map-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 160px;
+}
+
+.map-hud-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.map-label {
+  font-weight: 800;
+  color: var(--navy-dark);
+}
+
+.map-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+}
+
+.dot.cam-normal {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mil-green);
+}
+.dot.cam-breached {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mil-red);
+}
+.dot.bop {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mil-cyan);
+}
+.line.fence {
+  width: 14px;
+  height: 2px;
+  background: #94a3b8;
+  display: inline-block;
+}
+
+.interactive-tactical-map {
+  flex: 1;
+  background: #090e1a;
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==============================================================================
+   SHA-256 AUDIT LOG TABLE (TAB 4)
+   ============================================================================== */
+.audit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.audit-stats {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.audit-stats strong {
+  color: var(--mil-green-text);
+}
+
+.table-container {
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+}
+
+.hud-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: left;
+}
+
+.hud-table th {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-weight: 800;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-main);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.hud-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.hud-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+/* ==============================================================================
+   WATCHLIST CARDS (TAB 5)
+   ============================================================================== */
+.watchlist-split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.watchlist-col h3 {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--navy-dark);
+  margin-bottom: 2px;
+}
+
+.privacy-note {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.watchlist-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.watchlist-item-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+}
+
+.watchlist-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+  border: 1px solid var(--border-main);
+}
+
+.watchlist-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.watchlist-name {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--navy-dark);
+}
+
+.watchlist-sub {
+  font-size: 8.5px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}

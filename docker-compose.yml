@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  ibvap-web:
+    build: .
+    container_name: ibvap_tactical_console
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ACTIVE_INPUT_MODE=IBB_SECTOR
