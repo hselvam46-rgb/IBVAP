@@ -10,3 +10,6 @@ env/
 *.bak
 .vscode/
 .idea/
+data/snapshots/
+data/evidence/
+
